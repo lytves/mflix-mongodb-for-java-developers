@@ -65,10 +65,7 @@ public class UserDao extends AbstractMFlixDao {
 //        usersCollection.insertOne(user);
         usersCollection.withWriteConcern(WriteConcern.MAJORITY).insertOne(user);
 
-        if (usersCollection.find(Filters.eq("email", user.getEmail())).first() != null) {
-            return true;
-        }
-        return false;
+        return usersCollection.find(Filters.eq("email", user.getEmail())).first() != null;
 
         //TODO > Ticket: Handling Errors - make sure to only add new users
         // and not users that already exist.
@@ -94,10 +91,7 @@ public class UserDao extends AbstractMFlixDao {
         sessionsCollection.insertOne(session);
 
         Bson queryFilter = and(eq("user_id", userId), eq("jwt", jwt));
-        if (sessionsCollection.find(queryFilter).first() != null) {
-            return true;
-        }
-        return false;
+        return sessionsCollection.find(queryFilter).first() != null;
 
         //TODO > Ticket: Handling Errors - implement a safeguard against
         // creating a session with the same jwt token.
@@ -124,7 +118,7 @@ public class UserDao extends AbstractMFlixDao {
         // RESOLVED TODO> Ticket: User Management - implement the method that returns Sessions for a given
         // userId
 
-        return sessionsCollection.find(Filters.in("user_id", userId)).first();
+        return sessionsCollection.find(Filters.eq("user_id", userId)).first();
     }
 
     public boolean deleteUserSessions(String userId) {
@@ -162,6 +156,10 @@ public class UserDao extends AbstractMFlixDao {
     public boolean updateUserPreferences(String email, Map<String, ?> userPreferences) {
         //TODO> Ticket: User Preferences - implement the method that allows for user preferences to
         // be updated.
+//        usersCollection.updateOne(queryFilter, combine(set(setRequest.toString())));
+        usersCollection.updateOne(queryFilter, );
+        usersCollection.updateOne();
+
         //TODO > Ticket: Handling Errors - make this method more robust by
         // handling potential exceptions when updating an entry.
         return false;
