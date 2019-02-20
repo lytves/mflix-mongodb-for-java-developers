@@ -1,8 +1,8 @@
 ================
-Welcome to M220J
+Welcome to M220J - MongoDB University
 ================
 
-In this course we will be exploring how to use MongoDB in the Java environment.
+In this `M220J MongoDB for Java Developers course: <https://university.mongodb.com/courses/M220J/about/>`_ we will be exploring how to use MongoDB in the Java environment.
 We will be looking into:
 
 - Different versions and flavors of the MongoDB Java driver
