@@ -90,7 +90,7 @@ public class UserDao extends AbstractMFlixDao {
 
         sessionsCollection.insertOne(session);
 
-        Bson queryFilter = and(eq("user_id", userId), eq("jwt", jwt));
+        Bson queryFilter = Filters.and(eq("user_id", userId), eq("jwt", jwt));
         return sessionsCollection.find(queryFilter).first() != null;
 
         //TODO > Ticket: Handling Errors - implement a safeguard against
