@@ -155,14 +155,16 @@ public class UserDao extends AbstractMFlixDao {
      * @return User object that just been updated.
      */
     public boolean updateUserPreferences(String email, Map<String, ?> userPreferences) {
-        //TODO> Ticket: User Preferences - implement the method that allows for user preferences to
+        // RESOLVED TODO> Ticket: User Preferences - implement the method that allows for user preferences to
         // be updated.
-//        usersCollection.updateOne(queryFilter, combine(set(setRequest.toString())));
-        usersCollection.updateOne(queryFilter, );
-        usersCollection.updateOne();
+
+        if (userPreferences != null) {
+            Bson queryFilter = Filters.eq("email", email);
+            return usersCollection.updateOne(queryFilter, set("preferences", userPreferences)).isModifiedCountAvailable();
+        }
 
         //TODO > Ticket: Handling Errors - make this method more robust by
         // handling potential exceptions when updating an entry.
-        return false;
+        throw new IncorrectDaoOperation("Incorrect updateUserPreferences method");
     }
 }
