@@ -19,8 +19,8 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.Map;
 
-import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Updates.set;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
@@ -88,10 +88,11 @@ public class UserDao extends AbstractMFlixDao {
         session.setUserId(userId);
         session.setJwt(jwt);
 
-        sessionsCollection.insertOne(session);
-
         Bson queryFilter = Filters.and(eq("user_id", userId), eq("jwt", jwt));
-        return sessionsCollection.find(queryFilter).first() != null;
+        if (sessionsCollection.find(queryFilter).first() == null) {
+            sessionsCollection.insertOne(session);
+        }
+        return true;
 
         //TODO > Ticket: Handling Errors - implement a safeguard against
         // creating a session with the same jwt token.
