@@ -1,6 +1,7 @@
 package mflix.api.daos;
 
 import com.mongodb.MongoClientSettings;
+import com.mongodb.WriteConcern;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
@@ -61,8 +62,14 @@ public class UserDao extends AbstractMFlixDao {
      */
     public boolean addUser(User user) {
         //TODO > Ticket: Durable Writes -  you might want to use a more durable write concern here!
-        usersCollection.insertOne(user);
-        return true;
+//        usersCollection.insertOne(user);
+        usersCollection.withWriteConcern(WriteConcern.MAJORITY).insertOne(user);
+
+        if (usersCollection.find(Filters.eq("email", user.getEmail())).first() != null) {
+            return true;
+        }
+        return false;
+
         //TODO > Ticket: Handling Errors - make sure to only add new users
         // and not users that already exist.
 
@@ -85,8 +92,8 @@ public class UserDao extends AbstractMFlixDao {
         session.setJwt(jwt);
 
         sessionsCollection.insertOne(session);
-        Bson queryFilter = and(eq("user_id", userId), eq("jwt", jwt));
 
+        Bson queryFilter = and(eq("user_id", userId), eq("jwt", jwt));
         if (sessionsCollection.find(queryFilter).first() != null) {
             return true;
         }
@@ -137,7 +144,7 @@ public class UserDao extends AbstractMFlixDao {
         // RESOLVED TODO> Ticket: User Management - implement the delete user method
         deleteUserSessions(email);
         DeleteResult deleteResult = usersCollection.deleteMany(Filters.eq("email", email));
-        return  deleteResult.wasAcknowledged();
+        return deleteResult.wasAcknowledged();
 
         //TODO > Ticket: Handling Errors - make this method more robust by
         // handling potential exceptions.
