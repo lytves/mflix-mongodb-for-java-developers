@@ -65,11 +65,10 @@ public class UserDao extends AbstractMFlixDao {
 //        usersCollection.insertOne(user);
         usersCollection.withWriteConcern(WriteConcern.MAJORITY).insertOne(user);
 
-        return usersCollection.find(Filters.eq("email", user.getEmail())).first() != null;
-
         //TODO > Ticket: Handling Errors - make sure to only add new users
         // and not users that already exist.
 
+        return usersCollection.find(Filters.eq("email", user.getEmail())).first() != null;
     }
 
     /**
