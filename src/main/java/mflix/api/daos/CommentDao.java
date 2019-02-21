@@ -1,13 +1,17 @@
 package mflix.api.daos;
 
 import com.mongodb.MongoClientSettings;
+import com.mongodb.WriteConcern;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Updates;
 import mflix.api.models.Comment;
 import mflix.api.models.Critic;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
+import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
@@ -69,8 +74,23 @@ public class CommentDao extends AbstractMFlixDao {
      */
     public Comment addComment(Comment comment) {
 
-        // TODO> Ticket - Update User reviews: implement the functionality that enables adding a new
+        // RESOLVED TODO> Ticket - Update User reviews: implement the functionality that enables adding a new
         // comment.
+
+        if (comment != null) {
+
+            try {
+
+                commentCollection.withWriteConcern(WriteConcern.MAJORITY).insertOne(comment);
+
+                Bson queryFilter = Filters.eq("_id", new ObjectId(comment.getId()));
+                return commentCollection.find(queryFilter).first();
+            } catch (Exception ex){
+
+                throw new IncorrectDaoOperation("Incorrect addComment method");
+            }
+        }
+
         // TODO> Ticket - Handling Errors: Implement a try catch block to
         // handle a potential write exception when given a wrong commentId.
         return null;
@@ -91,8 +111,24 @@ public class CommentDao extends AbstractMFlixDao {
      */
     public boolean updateComment(String commentId, String text, String email) {
 
-        // TODO> Ticket - Update User reviews: implement the functionality that enables updating an
+        // RESOLVED TODO> Ticket - Update User reviews: implement the functionality that enables updating an
         // user own comments
+
+        try {
+
+            Bson queryFilter = Filters.eq("_id", new ObjectId(commentId));
+            Comment retrievedComment = commentCollection.find(queryFilter).first();
+
+            if (retrievedComment != null && email != null && email.equals(retrievedComment.getEmail())) {
+
+                Bson updateOperationDocument = Updates.combine(Updates.set("text", text), Updates.set("date", new Date()));
+
+                return commentCollection.updateOne(queryFilter, updateOperationDocument).isModifiedCountAvailable();
+            }
+        } catch (Exception ex) {
+            throw new IncorrectDaoOperation("Incorrect updateUserPreferences method");
+
+        }
         // TODO> Ticket - Handling Errors: Implement a try catch block to
         // handle a potential write exception when given a wrong commentId.
         return false;
