@@ -122,18 +122,22 @@ public class MovieDao extends AbstractMFlixDao {
      */
     public List<Document> getMoviesByCountry(String... country) {
 
-        Bson queryFilter = all("countries", country);
+//        Bson queryFilter = all("countries", country);
 //        Document oldFilter = new Document("countries", new Document("$all", country));
 
-//    projection(fields(include("title", "year")))
-    Bson oldProjection = new Document(new Document("title", 1));
-//
+        Bson queryFilter = Filters.in("countries", country);
+
+//        Bson oldProjection = new Document(new Document("title", 1));
+
         // RESOLVED TODO> Ticket: Projection - implement the query and projection required by the unit test
+
         List<Document> movies = new ArrayList<>();
+
         moviesCollection
                 .find(queryFilter)
                 .projection(fields(include("title", "year")))
-                .into(movies);
+                .iterator()
+                .forEachRemaining(movies::add);
 
         return movies;
     }
@@ -182,11 +186,12 @@ public class MovieDao extends AbstractMFlixDao {
         // filter and sort
 
         List<Document> movies = new ArrayList<>();
+
         moviesCollection
                 .find(castFilter)
                 .sort(sort)
-                .limit(limit)
                 .skip(skip)
+                .limit(limit)
                 .iterator()
                 .forEachRemaining(movies::add);
         return movies;
@@ -203,13 +208,16 @@ public class MovieDao extends AbstractMFlixDao {
      */
     public List<Document> getMoviesByGenre(String sortKey, int limit, int skip, String... genres) {
         // query filter
-        Bson castFilter = Filters.in("genres", genres);
+        Bson genreFilter = Filters.in("genres", genres);
         // sort key
         Bson sort = Sorts.descending(sortKey);
+
         List<Document> movies = new ArrayList<>();
+
         // TODO > Ticket: Paging - implement the necessary cursor methods to support simple
         // pagination like skip and limit in the code below
-        moviesCollection.find(castFilter).sort(sort).skip(skip).limit(limit).iterator()
+
+        moviesCollection.find(genreFilter).sort(sort).skip(skip).limit(limit).iterator()
                 .forEachRemaining(movies::add);
         return movies;
     }
