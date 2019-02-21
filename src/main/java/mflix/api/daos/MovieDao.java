@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -64,13 +65,35 @@ public class MovieDao extends AbstractMFlixDao {
             return null;
         }
 
-        List<Bson> pipeline = new ArrayList<>();
+        // List<Bson> pipeline = new ArrayList<>();
         // match stage to find movie
-        Bson match = Aggregates.match(Filters.eq("_id", new ObjectId(movieId)));
-        pipeline.add(match);
-        // TODO> Ticket: Get Comments - implement the lookup stage that allows the comments to
+        // Bson match = Aggregates.match(Filters.eq("_id", new ObjectId(movieId)));
+        // pipeline.add(match);
+
+        // It seams is not possible yet in Java to use builders to create a pipeline
+        // with "let" options, Compass showed this error: "Unrecognized option to $lookup: let"
+
+        // here https://github.com/mongodb/mongo-java-driver/blob/master/docs/reference/content/builders/aggregation.md
+        // there is some mongo-java-driver documentation about Aggregates
+
+        // RESOLVED TODO> Ticket: Get Comments - implement the lookup stage that allows the comments to
         // retrieved with Movies.
-        Document movie = moviesCollection.aggregate(pipeline).first();
+
+        List<Bson> pipelineWithOutBuilders = Arrays.asList(new Document("$match",
+                        new Document("_id",
+                                new ObjectId(movieId))),
+                new Document("$lookup",
+                        new Document("from", "comments")
+                                .append("let",
+                                        new Document("id", "$_id"))
+                                .append("pipeline", Arrays.asList(new Document("$match",
+                                        new Document("$expr",
+                                                new Document("$eq", Arrays.asList("$movie_id", "$$id"))))))
+                                .append("as", "comments")),
+                new Document("$sort",
+                        new Document("comments.date", 1L)));
+
+        Document movie = moviesCollection.aggregate(pipelineWithOutBuilders).first();
 
         return movie;
     }
