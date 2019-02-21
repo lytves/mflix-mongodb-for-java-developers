@@ -88,10 +88,14 @@ public class UserDao extends AbstractMFlixDao {
         session.setUserId(userId);
         session.setJwt(jwt);
 
-        Bson queryFilter = Filters.and(eq("user_id", userId), eq("jwt", jwt));
-        if (sessionsCollection.find(queryFilter).first() == null) {
-            sessionsCollection.insertOne(session);
+        Bson queryFilter = Filters.and(eq("user_id", userId));
+
+        Session oldSession = sessionsCollection.find(queryFilter).first();
+
+        if (oldSession != null) {
+            sessionsCollection.deleteMany(queryFilter);
         }
+        sessionsCollection.insertOne(session);
         return true;
 
         //TODO > Ticket: Handling Errors - implement a safeguard against
