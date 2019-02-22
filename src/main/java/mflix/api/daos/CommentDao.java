@@ -85,7 +85,7 @@ public class CommentDao extends AbstractMFlixDao {
 
                 Bson queryFilter = Filters.eq("_id", new ObjectId(comment.getId()));
                 return commentCollection.find(queryFilter).first();
-            } catch (Exception ex){
+            } catch (Exception ex) {
 
                 throw new IncorrectDaoOperation("Incorrect addComment method");
             }
@@ -142,9 +142,26 @@ public class CommentDao extends AbstractMFlixDao {
      * @return true if successful deletes the comment.
      */
     public boolean deleteComment(String commentId, String email) {
-        // TODO> Ticket Delete Comments - Implement the method that enables the deletion of a user
+
+        // RESOLVED TODO> Ticket Delete Comments - Implement the method that enables the deletion of a user
         // comment
         // TIP: make sure to match only users that own the given commentId
+
+        try {
+
+            Bson queryFilter = Filters.eq("_id", new ObjectId(commentId));
+
+            Comment retrievedComment = commentCollection.find(queryFilter).first();
+
+            if (retrievedComment != null && email != null && email.equals(retrievedComment.getEmail())) {
+
+                return commentCollection.deleteOne(queryFilter).wasAcknowledged();
+            }
+
+        } catch (Exception ex) {
+            throw new IllegalArgumentException("Incorrect deleteComment method");
+        }
+
         // TODO> Ticket Handling Errors - Implement a try catch block to
         // handle a potential write exception when given a wrong commentId.
         return false;
