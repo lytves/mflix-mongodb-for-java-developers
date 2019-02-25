@@ -5,8 +5,7 @@ import com.mongodb.ReadConcern;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.Updates;
+import com.mongodb.client.model.*;
 import mflix.api.models.Comment;
 import mflix.api.models.Critic;
 import org.bson.Document;
@@ -190,9 +189,32 @@ public class CommentDao extends AbstractMFlixDao {
         // // top 20 of users, they become a Critic, so mostActive is composed of
         // // Critic objects.
 
+/*      // another way with usage of pipeline
+        List<Bson> pipeline = new ArrayList<>();
+
+        String groupIdCast = "$email";
+        BsonField sum = Accumulators.sum("count", 1);
+
+        // adding both group _id and accumulators
+        Bson groupStage = Aggregates.group(groupIdCast, sum);
+
+        // create the sort order using Sorts builder
+        Bson sortOrder = Sorts.descending("count");
+        // pass the sort order to the sort stage builder
+        Bson sortStage = Aggregates.sort(sortOrder);
+
+        Bson limitStage = Aggregates.limit(20);
+
+        pipeline.add(groupStage);
+        pipeline.add(sortStage);
+        pipeline.add(limitStage);
+
+        commentCollection.aggregate(pipeline, Critic.class).into(mostActive);*/
+
         commentCollection.withReadConcern(ReadConcern.MAJORITY).aggregate(Arrays.asList(group("$email", sum("count", 1L)),
                 sort(descending("count")), limit(20)), Critic.class)
                 .iterator().forEachRemaining(mostActive::add);
+                // other way to save documents to to array
                 // .iterator().forEachRemaining(e -> mostActive.add(new Critic(e.getId(),e.getNumComments())));
 
         return mostActive;
