@@ -193,6 +193,7 @@ public class CommentDao extends AbstractMFlixDao {
         commentCollection.withReadConcern(ReadConcern.MAJORITY).aggregate(Arrays.asList(group("$email", sum("count", 1L)),
                 sort(descending("count")), limit(20)), Critic.class)
                 .iterator().forEachRemaining(mostActive::add);
+                // .iterator().forEachRemaining(e -> mostActive.add(new Critic(e.getId(),e.getNumComments())));
 
         return mostActive;
     }
