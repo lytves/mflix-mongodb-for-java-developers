@@ -20,9 +20,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+import static com.mongodb.client.model.Accumulators.sum;
+import static com.mongodb.client.model.Aggregates.*;
+import static com.mongodb.client.model.Indexes.descending;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
@@ -175,13 +179,20 @@ public class CommentDao extends AbstractMFlixDao {
      * @return List {@link Critic} objects.
      */
     public List<Critic> mostActiveCommenters() {
+
         List<Critic> mostActive = new ArrayList<>();
-        // // TODO> Ticket: User Report - execute a command that returns the
+
+        // RESOLVED TODO> Ticket: User Report - execute a command that returns the
         // // list of 20 users, group by number of comments. Don't forget,
         // // this report is expected to be produced with an high durability
         // // guarantee for the returned documents. Once a commenter is in the
         // // top 20 of users, they become a Critic, so mostActive is composed of
         // // Critic objects.
+
+        commentCollection.aggregate(Arrays.asList(group("$email", sum("count", 1L)),
+                sort(descending("count")), limit(20)), Critic.class)
+                .iterator().forEachRemaining(mostActive::add);
+
         return mostActive;
     }
 }
