@@ -1,6 +1,7 @@
 package mflix.api.daos;
 
 import com.mongodb.MongoClientSettings;
+import com.mongodb.ReadConcern;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
@@ -189,7 +190,7 @@ public class CommentDao extends AbstractMFlixDao {
         // // top 20 of users, they become a Critic, so mostActive is composed of
         // // Critic objects.
 
-        commentCollection.aggregate(Arrays.asList(group("$email", sum("count", 1L)),
+        commentCollection.withReadConcern(ReadConcern.MAJORITY).aggregate(Arrays.asList(group("$email", sum("count", 1L)),
                 sort(descending("count")), limit(20)), Critic.class)
                 .iterator().forEachRemaining(mostActive::add);
 
