@@ -1,6 +1,7 @@
 package mflix.api.daos;
 
 import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoException;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
@@ -61,11 +62,16 @@ public class UserDao extends AbstractMFlixDao {
      * @return True if successful, throw IncorrectDaoOperation otherwise
      */
     public boolean addUser(User user) {
-        //TODO > Ticket: Durable Writes -  you might want to use a more durable write concern here!
-//        usersCollection.insertOne(user);
-        usersCollection.withWriteConcern(WriteConcern.MAJORITY).insertOne(user);
 
-        //TODO > Ticket: Handling Errors - make sure to only add new users
+        // RESOLVED TODO > Ticket: Durable Writes -  you might want to use a more durable write concern here!
+
+        if (usersCollection.find(Filters.eq("email", user.getEmail())).first() != null) {
+            throw new IncorrectDaoOperation("Incorrect addUser method, user already exists!");
+        } else {
+            usersCollection.withWriteConcern(WriteConcern.MAJORITY).insertOne(user);
+        }
+
+        // RESOLVED TODO > Ticket: Handling Errors - make sure to only add new users
         // and not users that already exist.
 
         return usersCollection.find(Filters.eq("email", user.getEmail())).first() != null;
@@ -97,7 +103,7 @@ public class UserDao extends AbstractMFlixDao {
         sessionsCollection.insertOne(session);
         return true;
 
-        //TODO > Ticket: Handling Errors - implement a safeguard against
+        // RESOLVED TODO > Ticket: Handling Errors - implement a safeguard against
         // creating a session with the same jwt token.
     }
 
@@ -140,13 +146,16 @@ public class UserDao extends AbstractMFlixDao {
     public boolean deleteUser(String email) {
         // remove user sessions
         // RESOLVED TODO> Ticket: User Management - implement the delete user method
-        deleteUserSessions(email);
-        DeleteResult deleteResult = usersCollection.deleteMany(Filters.eq("email", email));
-        return deleteResult.wasAcknowledged();
+        try {
 
-        //TODO > Ticket: Handling Errors - make this method more robust by
+            deleteUserSessions(email);
+            DeleteResult deleteResult = usersCollection.deleteMany(Filters.eq("email", email));
+            return deleteResult.wasAcknowledged();
+        } catch (MongoException ex) {
+            return false;
+        }
+        // RESOLVED TODO > Ticket: Handling Errors - make this method more robust by
         // handling potential exceptions.
-//        return false;
     }
 
     /**
@@ -161,13 +170,17 @@ public class UserDao extends AbstractMFlixDao {
         // RESOLVED TODO> Ticket: User Preferences - implement the method that allows for user preferences to
         // be updated.
 
-        if (userPreferences != null) {
-            Bson queryFilter = Filters.eq("email", email);
-            return usersCollection.updateOne(queryFilter, set("preferences", userPreferences)).isModifiedCountAvailable();
-        }
+        try {
 
-        //TODO > Ticket: Handling Errors - make this method more robust by
+            if (userPreferences != null) {
+                Bson queryFilter = Filters.eq("email", email);
+                return usersCollection.updateOne(queryFilter, set("preferences", userPreferences)).isModifiedCountAvailable();
+            }
+            return false;
+        } catch (MongoException ex) {
+            throw new IncorrectDaoOperation("Incorrect updateUserPreferences method");
+        }
+        // RESOLVED TODO > Ticket: Handling Errors - make this method more robust by
         // handling potential exceptions when updating an entry.
-        throw new IncorrectDaoOperation("Incorrect updateUserPreferences method");
     }
 }
